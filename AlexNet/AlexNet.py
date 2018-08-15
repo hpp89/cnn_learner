@@ -11,11 +11,13 @@ BATCH_SIZE = 64
 LEARNING_RATE = 0.001
 DISPLAY_IMAGE_INDEX = 10
 
+train_images, train_labels = input_data.dog_breed_train()
+test_images = input_data.dog_breed_test()
 
-data = input_data.get_ImageNet()
 
 def next_batch(batch_size):
     pass
+
 
 def AlexNet(x, keep_prob):
     with tf.name_scope('reshape'):

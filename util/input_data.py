@@ -1,3 +1,4 @@
+import os
 import util
 import numpy as np
 import pandas as pd
@@ -25,12 +26,14 @@ def get_cifar_data():
     return train_images, train_labels, test_images, test_labels
 
 
-def get_ImageNet():
-    file_path = './../dataSets/imagenet_fall11_urls/fall11_urls.txt'
+def dog_breed_train():
+    images = os.listdir('./../dataSets/DogBreed/train')
+    labels = pd.read_csv('./../dataSets/DogBreed/labels.csv')
 
-    with open(file_path, 'r') as f:
-        d = [line for line in f]
-
-get_ImageNet()
+    return images, labels.iloc[:, 1].values
 
 
+def dog_breed_test():
+    images = os.listdir('./../dataSets/DogBreed/test')
+
+    return images

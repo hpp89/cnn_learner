@@ -13,48 +13,68 @@ def next_batch():
     pass
 
 
-def VGG_16(x, keep_prob):
-    with tf.name_scope('reshape'):
-        x = tf.reshape(x, [-1, IMAGE_SIZE, IMAGE_SIZE, CHANNELS])
+def VGG_16(inputs, keep_prob):
+    # with tf.name_scope('reshape'):
+    #     inputs = tf.reshape(inputs, [-1, IMAGE_SIZE, IMAGE_SIZE, CHANNELS])
+    #
+    # with tf.name_scope('layer1'):
+    #     inputs = net.conv2_layer(inputs, 3, 64, 1, padding='SAME')
+    #     inputs = net.conv2_layer(inputs, 3, 64, 1, padding='SAME')
+    #     inputs = net.max_pool_layer(inputs, 2, 2, padding='VALID')
+    #
+    # with tf.name_scope('layer2'):
+    #     inputs = net.conv2_layer(inputs, 3, 128, 1, padding='SAME')
+    #     inputs = net.conv2_layer(inputs, 3, 128, 1, padding='SAME')
+    #     inputs = net.max_pool_layer(inputs, 2, 2, padding='VALID')
+    #
+    # with tf.name_scope('layer3'):
+    #     inputs = net.conv2_layer(inputs, 3, 256, 1, padding='SAME')
+    #     inputs = net.conv2_layer(inputs, 3, 256, 1, padding='SAME')
+    #     inputs = net.conv2_layer(inputs, 3, 256, 1, padding='SAME')
+    #     inputs = net.max_pool_layer(inputs, 2, 2, padding='VALID')
+    #
+    # with tf.name_scope('layer4'):
+    #     inputs = net.conv2_layer(inputs, 3, 512, 1, padding='SAME')
+    #     inputs = net.conv2_layer(inputs, 3, 512, 1, padding='SAME')
+    #     inputs = net.conv2_layer(inputs, 3, 512, 1, padding='SAME')
+    #     inputs = net.max_pool_layer(inputs, 2, 2, padding='VALID')
+    #
+    # with tf.name_scope('layer5'):
+    #     inputs = net.conv2_layer(inputs, 3, 512, 1, padding='SAME')
+    #     inputs = net.conv2_layer(inputs, 3, 512, 1, padding='SAME')
+    #     inputs = net.conv2_layer(inputs, 3, 512, 1, padding='SAME')
+    #     inputs = net.max_pool_layer(inputs, 2, 2, padding='VALID')
+    #
+    # with tf.name_scope('flat'):
+    #     shape = inputs.shape
+    #     inputs = tf.reshape(inputs, [-1, shape[1].value * shape[2].value * shape[3].value])
+    #
+    # with tf.name_scope('layer6'):
+    #     inputs = net.fully_connection_layer(inputs, 4096, relu=True, keep_prob=keep_prob)
+    #     inputs = net.fully_connection_layer(inputs, 4096, relu=True, keep_prob=keep_prob)
+    #     inputs = net.fully_connection_layer(inputs, 1000, relu=False, keep_prob=1.0)
 
-    with tf.name_scope('layer1'):
-        x = net.conv2_layer(x, 3, 64, 1, padding='SAME')
-        x = net.conv2_layer(x, 3, 64, 1, padding='SAME')
-        x = net.max_pool_layer(x, 2, 2, padding='VALID')
+    with slim.arg_scope([slim.conv2d, slim.fully_connected],
+                        activation_fn=tf.nn.relu,
+                        weights_initializer=tf.truncated_normal_initializer(0.0, 0.01),
+                        weights_regularizer=slim.l2_regularizer(0.0005)):
+        inputs = slim.repeat(inputs, 2, slim.conv2d, 64, [3, 3], scope='conv1')
+        inputs = slim.max_pool2d(inputs, [2, 2], scope='pool1')
+        inputs = slim.repeat(inputs, 2, slim.conv2d, 128, [3, 3], scope='conv2')
+        inputs = slim.max_pool2d(inputs, [2, 2], scope='pool2')
+        inputs = slim.repeat(inputs, 3, slim.conv2d, 256, [3, 3], scope='conv3')
+        inputs = slim.max_pool2d(inputs, [2, 2], scope='pool3')
+        inputs = slim.repeat(inputs, 3, slim.conv2d, 512, [3, 3], scope='conv4')
+        inputs = slim.max_pool2d(inputs, [2, 2], scope='pool4')
+        inputs = slim.repeat(inputs, 3, slim.conv2d, 512, [3, 3], scope='conv5')
+        inputs = slim.max_pool2d(inputs, [2, 2], scope='pool5')
+        inputs = slim.fully_connected(inputs, 4096, scope='fc6')
+        inputs = slim.dropout(inputs, keep_prob, scope='dropout6')
+        inputs = slim.fully_connected(inputs, 4096, scope='fc7')
+        inputs = slim.dropout(inputs, keep_prob, scope='dropout7')
+        inputs = slim.fully_connected(inputs, 1000, activation_fn=None, scope='fc8')
 
-    with tf.name_scope('layer2'):
-        x = net.conv2_layer(x, 3, 128, 1, padding='SAME')
-        x = net.conv2_layer(x, 3, 128, 1, padding='SAME')
-        x = net.max_pool_layer(x, 2, 2, padding='VALID')
-
-    with tf.name_scope('layer3'):
-        x = net.conv2_layer(x, 3, 256, 1, padding='SAME')
-        x = net.conv2_layer(x, 3, 256, 1, padding='SAME')
-        x = net.conv2_layer(x, 3, 256, 1, padding='SAME')
-        x = net.max_pool_layer(x, 2, 2, padding='VALID')
-
-    with tf.name_scope('layer4'):
-        x = net.conv2_layer(x, 3, 512, 1, padding='SAME')
-        x = net.conv2_layer(x, 3, 512, 1, padding='SAME')
-        x = net.conv2_layer(x, 3, 512, 1, padding='SAME')
-        x = net.max_pool_layer(x, 2, 2, padding='VALID')
-
-    with tf.name_scope('layer5'):
-        x = net.conv2_layer(x, 3, 512, 1, padding='SAME')
-        x = net.conv2_layer(x, 3, 512, 1, padding='SAME')
-        x = net.conv2_layer(x, 3, 512, 1, padding='SAME')
-        x = net.max_pool_layer(x, 2, 2, padding='VALID')
-
-    with tf.name_scope('flat'):
-        shape = x.shape
-        x = tf.reshape(x, [-1, shape[1].value * shape[2].value * shape[3].value])
-
-    with tf.name_scope('layer6'):
-        x = net.fully_connection_layer(x, 4096, relu=True, keep_prob=keep_prob)
-        x = net.fully_connection_layer(x, 4096, relu=True, keep_prob=keep_prob)
-        x = net.fully_connection_layer(x, 1000, relu=False, keep_prob=1.0)
-
-    return x
+    return inputs
 
 
 keep_prob = tf.placeholder(tf.float32)
