@@ -20,12 +20,12 @@ def read_resize_image(file_path, image_size):
 
     s = 0
     if image.shape[0] < image.shape[1]:
-        s = (int(image.shape[0] * image_size / image.shape[1]), image_size)
+        s = (int(round(float(image.shape[0]) * image_size) / image.shape[1]), image_size)
     else:
-        s = (image_size, int(image.shape[1] * image_size / image.shape[0]))
+        s = (image_size, int(round(float(image.shape[1]) * image_size) / image.shape[0]))
 
-    image = cv2.resize(image, s, interpolation=cv2.INTER_CUBIC)
-    image = cv2.copyMakeBorder(image, 0, image_size - image.shape[1], 0, image_size - image.shape[0],
+    image = cv2.resize(image, (s[1], s[0]), interpolation=cv2.INTER_CUBIC)
+    image = cv2.copyMakeBorder(image, 0, image_size - image.shape[0], 0, image_size - image.shape[1],
                                cv2.BORDER_CONSTANT, value=(0, 0, 0))
 
-    return image
+    return image[:, :, ::-1]

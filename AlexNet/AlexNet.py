@@ -1,8 +1,10 @@
 import cv2
+import pandas as pd
 import util.network as network
-import numpy as np
 import util.input_data as input_data
+import numpy as np
 import tensorflow as tf
+import util.util as ul
 import util.common as common
 
 CHANNELS = 3
@@ -13,6 +15,29 @@ DISPLAY_IMAGE_INDEX = 10
 
 train_images, train_labels = input_data.dog_breed_train()
 test_images = input_data.dog_breed_test()
+
+
+def get_image_normalization_matrix(images):
+    num = len(images)
+
+    img_data = np.ndarray(shape=(num, IMAGE_SIZE, IMAGE_SIZE, CHANNELS), dtype=np.float32)
+
+    for index in range(num):
+        image = ul.read_resize_image('./../dataSets/DogBreed/train/%s.jpg' % images[index], IMAGE_SIZE)
+        data = np.array(image, dtype=np.float32)
+
+        data[:, :, 0] = data[:, :, 0] / 255.0
+        data[:, :, 1] = data[:, :, 1] / 255.0
+        data[:, :, 2] = data[:, :, 2] / 255.0
+
+        img_data[index] = data
+
+    return img_data
+
+
+train_images_norm = get_image_normalization_matrix(train_images)
+test_images_norm = get_image_normalization_matrix(test_images)
+train_labels = pd.get_dummies(train_labels)
 
 
 def next_batch(batch_size):
@@ -74,7 +99,7 @@ EPOCHS = 1000
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
 
-    start_time = common.get_clock()
+    start_time = util.common.get_clock()
     for step in range(1, EPOCHS + 1):
         xs, ys = next_batch(BATCH_SIZE)
 
@@ -89,8 +114,8 @@ with tf.Session() as sess:
 
             print('step {} valid accuracy {}, loss {}'.format(step, valid_accuracy, train_loss))
 
-    end_time = common.get_clock()
-    common.get_format_time(start_time, end_time)
+    end_time = util.common.get_clock()
+    util.common.get_format_time(start_time, end_time)
 
     xs, ys = next_batch(BATCH_SIZE)
     feed_dict = {x: xs, y_: ys, keep_prob: 1.0}
