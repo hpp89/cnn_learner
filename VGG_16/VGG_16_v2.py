@@ -50,66 +50,66 @@ model.add(Conv2D(64, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_
 model.add(BatchNormalization())
 model.add(Activation('relu'))
 model.add(Conv2D(64, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_regularizer=keras.regularizers.l2(weight_decay),
-                 kernel_initializer=he_normal(), input_shape=[32, 32, 3], name='block1_conv2'))
+                 kernel_initializer=he_normal(), name='block1_conv2'))
 model.add(BatchNormalization())
 model.add(Activation('relu'))
-model.add(MaxPooling2D((2, 2), (2, 2), padding='SAME', name='block1_pool'))
+model.add(MaxPooling2D((2, 2), (2, 2), padding='same', name='block1_pool'))
 
 # block2
 model.add(Conv2D(128, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_regularizer=keras.regularizers.l2(weight_decay),
-                 kernel_initializer=he_normal(), input_shape=[32, 32, 3], name='block2_conv1'))
+                 kernel_initializer=he_normal(), name='block2_conv1'))
 model.add(BatchNormalization())
 model.add(Activation('relu'))
 model.add(Conv2D(128, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_regularizer=keras.regularizers.l2(weight_decay),
-                 kernel_initializer=he_normal(), input_shape=[32, 32, 3], name='block2_conv2'))
+                 kernel_initializer=he_normal(), name='block2_conv2'))
 model.add(BatchNormalization())
 model.add(Activation('relu'))
-model.add(MaxPooling2D((2, 2), (2, 2), padding='SAME', name='block2_pool'))
+model.add(MaxPooling2D((2, 2), (2, 2), padding='same', name='block2_pool'))
 
 # block3
 model.add(Conv2D(256, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_regularizer=keras.regularizers.l2(weight_decay),
-                 kernel_initializer=he_normal(), input_shape=[32, 32, 3], name='block3_conv1'))
+                 kernel_initializer=he_normal(), name='block3_conv1'))
 model.add(BatchNormalization())
 model.add(Activation('relu'))
 model.add(Conv2D(256, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_regularizer=keras.regularizers.l2(weight_decay),
-                 kernel_initializer=he_normal(), input_shape=[32, 32, 3], name='block3_conv2'))
+                 kernel_initializer=he_normal(), name='block3_conv2'))
 model.add(BatchNormalization())
 model.add(Activation('relu'))
 model.add(Conv2D(256, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_regularizer=keras.regularizers.l2(weight_decay),
-                 kernel_initializer=he_normal(), input_shape=[32, 32, 3], name='block3_conv3'))
+                 kernel_initializer=he_normal(), name='block3_conv3'))
 model.add(BatchNormalization())
 model.add(Activation('relu'))
-model.add(MaxPooling2D((2, 2), (2, 2), padding='SAME', name='block3_pool'))
+model.add(MaxPooling2D((2, 2), (2, 2), padding='same', name='block3_pool'))
 
 # block4
 model.add(Conv2D(512, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_regularizer=keras.regularizers.l2(weight_decay),
-                 kernel_initializer=he_normal(), input_shape=[32, 32, 3], name='block4_conv1'))
+                 kernel_initializer=he_normal(), name='block4_conv1'))
 model.add(BatchNormalization())
 model.add(Activation('relu'))
 model.add(Conv2D(512, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_regularizer=keras.regularizers.l2(weight_decay),
-                 kernel_initializer=he_normal(), input_shape=[32, 32, 3], name='block4_conv2'))
+                 kernel_initializer=he_normal(), name='block4_conv2'))
 model.add(BatchNormalization())
 model.add(Activation('relu'))
 model.add(Conv2D(512, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_regularizer=keras.regularizers.l2(weight_decay),
-                 kernel_initializer=he_normal(), input_shape=[32, 32, 3], name='block4_conv3'))
+                 kernel_initializer=he_normal(), name='block4_conv3'))
 model.add(BatchNormalization())
 model.add(Activation('relu'))
-model.add(MaxPooling2D((2, 2), (2, 2), padding='SAME', name='block4_pool'))
+model.add(MaxPooling2D((2, 2), (2, 2), padding='same', name='block4_pool'))
 
 # block5
 model.add(Conv2D(512, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_regularizer=keras.regularizers.l2(weight_decay),
-                 kernel_initializer=he_normal(), input_shape=[32, 32, 3], name='block5_conv1'))
+                 kernel_initializer=he_normal(), name='block5_conv1'))
 model.add(BatchNormalization())
 model.add(Activation('relu'))
 model.add(Conv2D(512, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_regularizer=keras.regularizers.l2(weight_decay),
-                 kernel_initializer=he_normal(), input_shape=[32, 32, 3], name='block5_conv2'))
+                 kernel_initializer=he_normal(), name='block5_conv2'))
 model.add(BatchNormalization())
 model.add(Activation('relu'))
 model.add(Conv2D(512, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_regularizer=keras.regularizers.l2(weight_decay),
-                 kernel_initializer=he_normal(), input_shape=[32, 32, 3], name='block5_conv3'))
+                 kernel_initializer=he_normal(), name='block5_conv3'))
 model.add(BatchNormalization())
 model.add(Activation('relu'))
-model.add(MaxPooling2D((2, 2), (2, 2), padding='SAME', name='block5_pool'))
+model.add(MaxPooling2D((2, 2), (2, 2), padding='same', name='block5_pool'))
 
 model.add(Flatten(name='faltten'))
 model.add(Dense(4096, use_bias=True, kernel_regularizer=keras.regularizers.l2(weight_decay), kernel_initializer=he_normal(), name='fc_1'))
