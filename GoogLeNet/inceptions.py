@@ -16,7 +16,7 @@ def inception_v1(inputs, out_size_1, out_size_3_reduce, out_size_3, out_size_5_r
     conv_max_pool_1 = net.max_pool_layer(inputs, 3, 1, padding='VALID')
     conv_max_pool_2 = net.conv2_layer(conv_max_pool_1, 1, out_size_max_pool_proj, 1, padding='VALID')
 
-    inputs = tf.concat(3, (conv_1_1, conv_3_2, conv_5_2, conv_max_pool_2))
+    inputs = tf.concat((conv_1_1, conv_3_2, conv_5_2, conv_max_pool_2), axis=3)
 
     return inputs
 
@@ -35,7 +35,7 @@ def inception_v2(inputs, out_size_1, out_size_3_reduce, out_size_3, out_size_5_r
     conv_max_pool_1 = net.max_pool_layer(inputs, 3, 1, padding='VALID')
     conv_max_pool_2 = net.conv2_layer(conv_max_pool_1, 1, out_size_max_pool_proj, 1, padding='VALID')
 
-    inputs = tf.concat(3, (conv_1_1, conv_3_2, conv_5_3, conv_max_pool_2))
+    inputs = tf.concat((conv_1_1, conv_3_2, conv_5_3, conv_max_pool_2), axis=3)
 
     return inputs
 

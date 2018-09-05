@@ -12,7 +12,7 @@ def bias_variable(shape):
 
 
 def conv2_layer(x, filter_size, out_num, stride_size, padding='SAME'):
-    in_num = x.shape[2].value
+    in_num = x.shape[3].value
 
     weight = weight_variable([filter_size, filter_size, in_num, out_num])
     bias = bias_variable([out_num])
