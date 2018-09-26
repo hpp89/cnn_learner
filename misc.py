@@ -1,5 +1,41 @@
+import time
+import math
 import numpy as np
 import tensorflow as tf
+
+np.random.seed(133)
+
+
+def diff_time(start_time):
+    now = now_time()
+    return math.floor((now - start_time) * 10) / 10
+
+
+def now_time():
+    return time.clock()
+
+
+def images_norm(images, name='mean'):
+    if name == 'mean':
+        images[:, :, 0] -= 123.680
+        images[:, :, 1] -= 116.779
+        images[:, :, 2] -= 103.939
+    elif name == 'norm_0_1':
+        images = images / 255.0
+    elif name == 'norm__1_1':
+        images = images / 255.0 * 2 - 1.0
+
+    return images
+
+
+def shuffle(x, y):
+    num = x.shape[0]
+
+    order = np.random.permutation(range(num))
+    x = x[order, :, :, :]
+    y = y[order, :]
+
+    return x, y
 
 
 def weight_variable(shape):
@@ -48,21 +84,22 @@ def conv2_basic(inputs, kernel, out_num, name, stride=1, padding="SAME", relu=Tr
 
 
 def max_pooling_2x2(inputs, name, ksize=2, stride=2, padding="SAME"):
-    return tf.nn.max_pool(inputs, ksize=[1, ksize, ksize, 1], strides=[1, stride, stride, 1], padding=padding, name=name)
+    return tf.nn.max_pool(inputs, ksize=[1, ksize, ksize, 1], strides=[1, stride, stride, 1], padding=padding,
+                          name=name)
 
 
 def fully_connection(inputs, out_num, keep_prob=1.0, relu=True, alpha=0.0):
     in_num = inputs.get_shape().as_list()[-1]
 
-    weight = weight_variable(shape=[in_num, out_num])
+    weight = weight_variable([in_num, out_num])
     bias = bias_variable([out_num])
 
-    inputs = tf.matmul(inputs, weight) + bias
+    inputs = tf.add(tf.matmul(inputs, weight), bias)
 
     if relu:
         inputs = leak_relu(inputs, alpha=alpha)
 
-    if keep_prob < 1.0:
+    if keep_prob is not 1.0:
         inputs = tf.nn.dropout(inputs, keep_prob=keep_prob)
 
     return inputs

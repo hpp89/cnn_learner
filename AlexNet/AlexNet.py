@@ -2,7 +2,7 @@ import keras
 import time
 import numpy as np
 import tensorflow as tf
-from keras.datasets import cifar10
+from keras.datasets import
 from keras.layers import MaxPooling2D, Dense, Activation, Flatten, Conv2D
 from keras.initializers import he_normal
 from keras.layers import BatchNormalization, Dropout
