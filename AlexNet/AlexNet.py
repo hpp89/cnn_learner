@@ -1,152 +1,133 @@
+import keras
 import time
-import pandas as pd
-import util.network as network
-import util.input_data as input_data
 import numpy as np
 import tensorflow as tf
-import util.util as ul
-import util.common as common
+from keras.datasets import cifar10
+from keras.layers import MaxPooling2D, Dense, Activation, Flatten, Conv2D
+from keras.initializers import he_normal
+from keras.layers import BatchNormalization, Dropout
+from keras import optimizers
+import matplotlib.pyplot as plt
+from keras.callbacks import TensorBoard, LearningRateScheduler
+from keras.preprocessing.image import ImageDataGenerator
 
-CHANNELS = 3
-IMAGE_SIZE = 32
-BATCH_SIZE = 64
-LEARNING_RATE = 0.005
-DISPLAY_IMAGE_INDEX = 10
-CLASS_NUM = 10
+epochs = 15
+iterations = 391
+batch_size = 128
+num_classes = 10
+dropout = 0.5
+weight_decay = 0.0001
 
-train_images, train_labels, test_images, test_labels = input_data.get_cifar_data()
-
-
-def get_image_normalization_matrix(images):
-    num = len(images)
-
-    img_data = np.ndarray(shape=(num, IMAGE_SIZE, IMAGE_SIZE, CHANNELS), dtype=np.float32)
-
-    for index in range(num):
-        data = np.array(np.reshape(images[index], newshape=[IMAGE_SIZE, IMAGE_SIZE, CHANNELS]), dtype=np.float32)
-
-        data[:, :, 0] = data[:, :, 0] / 255.0
-        data[:, :, 1] = data[:, :, 1] / 255.0
-        data[:, :, 2] = data[:, :, 2] / 255.0
-
-        img_data[index] = data
-
-    return img_data
+log_file_path = './alex_net_logs'
 
 
-train_images = get_image_normalization_matrix(train_images)
-test_images = get_image_normalization_matrix(test_images)
-train_labels = pd.get_dummies(train_labels).values
-test_labels = pd.get_dummies(test_labels).values
+def scheduler(epoch):
+    if epoch < 10:
+        return 0.1
+    if epoch < 13:
+        return 0.01
+    return 0.001
+
+
+(train_images, train_labels), (test_images, test_labels) = cifar10.load_data()
+train_labels = keras.utils.to_categorical(train_labels, num_classes)
+test_labels = keras.utils.to_categorical(test_labels, num_classes)
+train_images = train_images.astype(np.float32)
+test_images = test_images.astype(np.float32)
+
+train_images[:, :, :, 0] = (train_images[:, :, :, 0] - 123.680)
+train_images[:, :, :, 1] = (train_images[:, :, :, 1] - 116.779)
+train_images[:, :, :, 2] = (train_images[:, :, :, 2] - 103.939)
+test_images[:, :, :, 0] = (test_images[:, :, :, 0] - 123.680)
+test_images[:, :, :, 1] = (test_images[:, :, :, 1] - 116.779)
+test_images[:, :, :, 2] = (test_images[:, :, :, 2] - 103.939)
 
 print(train_images.shape, train_labels.shape, test_images.shape, test_labels.shape)
 
+model = keras.models.Sequential()
+# block1
+model.add(Conv2D(64, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_regularizer=keras.regularizers.l2(weight_decay),
+                 kernel_initializer=he_normal(), name='block1_conv', input_shape=[32, 32, 3]))
+model.add(BatchNormalization())
+model.add(Activation('relu'))
+model.add(MaxPooling2D((2, 2), (2, 2), padding='same', name='block1_pool'))
 
-def shuffle(images, labels):
-    order = np.random.permutation(images.shape[0])
-    labels = labels[order, :]
-    images = images[order, :, :, :]
+# block2
+model.add(Conv2D(128, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_regularizer=keras.regularizers.l2(weight_decay),
+                 kernel_initializer=he_normal(), name='block2_conv'))
+model.add(BatchNormalization())
+model.add(Activation('relu'))
+model.add(MaxPooling2D((2, 2), (2, 2), padding='same', name='block2_pool'))
 
-    return images, labels
+# block3
+model.add(Conv2D(256, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_regularizer=keras.regularizers.l2(weight_decay),
+                 kernel_initializer=he_normal(), name='block3_conv'))
+model.add(BatchNormalization())
+model.add(Activation('relu'))
+model.add(MaxPooling2D((2, 2), (2, 2), padding='same', name='block3_pool'))
 
+# block4
+model.add(Conv2D(512, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_regularizer=keras.regularizers.l2(weight_decay),
+                 kernel_initializer=he_normal(), name='block4_conv'))
+model.add(BatchNormalization())
+model.add(Activation('relu'))
+model.add(MaxPooling2D((2, 2), (2, 2), padding='same', name='block4_pool'))
 
-train_images, train_labels = shuffle(train_images, train_labels)
+# block5
+model.add(Conv2D(512, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_regularizer=keras.regularizers.l2(weight_decay),
+                 kernel_initializer=he_normal(), name='block5_conv'))
+model.add(BatchNormalization())
+model.add(Activation('relu'))
+model.add(MaxPooling2D((2, 2), (2, 2), padding='same', name='block5_pool'))
 
-start = -BATCH_SIZE
+model.add(Flatten(name='faltten'))
+model.add(Dense(4096, use_bias=True, kernel_regularizer=keras.regularizers.l2(weight_decay), kernel_initializer=he_normal(), name='fc_1'))
+model.add(BatchNormalization())
+model.add(Activation('relu'))
+model.add(Dropout(dropout))
 
+model.add(Dense(4096, use_bias=True, kernel_regularizer=keras.regularizers.l2(weight_decay), kernel_initializer=he_normal(), name='fc_2'))
+model.add(BatchNormalization())
+model.add(Activation('relu'))
+model.add(Dropout(dropout))
 
-def next_batch(batch_size):
-    global start
-    global train_labels
-    global train_images
+model.add(Dense(10, use_bias=True, kernel_regularizer=keras.regularizers.l2(weight_decay), kernel_initializer=he_normal(), name='fc_3'))
+model.add(BatchNormalization())
+model.add(Activation('softmax'))
 
-    start += batch_size
-    if start + batch_size > train_labels.shape[0]:
-        train_images, train_labels = shuffle(train_images, train_labels)
-        start = 0
+sgd = optimizers.SGD(lr=0.1, momentum=0.9, nesterov=True)
+model.compile(sgd, loss='categorical_crossentropy', metrics=['accuracy'])
 
-    end = start + batch_size
+tb_cb = TensorBoard(log_dir=log_file_path, histogram_freq=0)
+change_lr = LearningRateScheduler(scheduler)
+cbks = [change_lr, tb_cb]
 
-    return train_images[start:end, :, :, :], train_labels[start:end, :]
+print('Using real-time data augmentation.')
+datagen = ImageDataGenerator(horizontal_flip=True,
+                             width_shift_range=0.125, height_shift_range=0.125, fill_mode='constant', cval=0.)
 
+datagen.fit(train_images)
 
-def AlexNet(x, keep_prob):
-    # with tf.name_scope('reshape'):
-    #     x = tf.reshape(x, shape=[-1, IMAGE_SIZE, IMAGE_SIZE, CHANNELS])
+history = model.fit_generator(datagen.flow(train_images, train_labels, batch_size=batch_size),
+                              steps_per_epoch=iterations,
+                              epochs=epochs,
+                              callbacks=cbks,
+                              validation_data=(test_images, test_labels))
+model.save('retrain.h5')
 
-    with tf.name_scope('layer1'):
-        conv1 = network.conv2_layer(x, 3, 32, 1, padding='SAME')
-        pool1 = network.max_pool_layer(conv1, 2, 2, padding='VALID')
+loss = history.history.get('loss')
+acc = history.history.get('acc')
+val_loss = history.history.get('val_loss')
+val_acc = history.history.get('val_acc')
 
-    with tf.name_scope('layer2'):
-        conv2 = network.conv2_layer(pool1, 3, 64, 1, padding='SAME')
-        pool2 = network.max_pool_layer(conv2, 2, 2, padding='VALID')
-
-    with tf.name_scope('layer3'):
-        conv3 = network.conv2_layer(pool2, 3, 128, 1, padding='SAME')
-
-    with tf.name_scope('layer4'):
-        conv4 = network.conv2_layer(conv3, 3, 256, 1, padding='SAME')
-
-    with tf.name_scope('layer5'):
-        conv5 = network.conv2_layer(conv4, 3, 512, 1, padding='SAME')
-        pool5 = network.max_pool_layer(conv5, 2, 2, padding='VALID')
-
-    with tf.name_scope('flat'):
-        shape = pool5.shape
-        pool5_flat = tf.reshape(pool5, [-1, shape[1].value * shape[2].value * shape[3].value])
-
-    with tf.name_scope('layer6'):
-        fc1 = network.fully_connection_layer(pool5_flat, 2048, relu=True, keep_prob=keep_prob)
-
-    with tf.name_scope('layer7'):
-        fc2 = network.fully_connection_layer(fc1, 2048, relu=True, keep_prob=keep_prob)
-
-    with tf.name_scope('layer8'):
-        fc3 = network.fully_connection_layer(fc2, CLASS_NUM, relu=False, keep_prob=1.0)
-
-    return fc3
-
-
-keep_prob = tf.placeholder(tf.float32)
-x = tf.placeholder(tf.float32, [None, IMAGE_SIZE, IMAGE_SIZE, CHANNELS])
-y_ = tf.placeholder(tf.float32, [None, CLASS_NUM])
-
-logits = AlexNet(x, keep_prob)
-
-loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=logits, labels=y_))
-train_step = tf.train.AdamOptimizer(LEARNING_RATE).minimize(loss)
-
-predict = tf.equal(tf.argmax(logits, 1), tf.argmax(y_, 1))
-accuracy = tf.reduce_mean(tf.cast(predict, tf.float32))
-
-EPOCHS = 1000
-
-with tf.Session() as sess:
-    sess.run(tf.global_variables_initializer())
-
-    start_time = common.get_clock()
-    lts = time.clock()
-    for step in range(1, EPOCHS + 1):
-        xs, ys = next_batch(BATCH_SIZE)
-
-        feed_dict = {x: xs, y_: ys, keep_prob: 0.5}
-        _, train_loss = sess.run([train_step, loss], feed_dict=feed_dict)
-
-        if step % 20 == 0:
-            xs, ys = next_batch(BATCH_SIZE)
-
-            feed_dict = {x: xs, y_: ys, keep_prob: 0.75}
-            valid_accuracy = accuracy.eval(feed_dict=feed_dict)
-            nts = time.clock()
-            print('step {} valid accuracy {}, loss {}({}sec)'.format(step, valid_accuracy, train_loss, round(nts - lts)))
-            lts = nts
-
-    end_time = common.get_clock()
-    common.get_format_time(start_time, end_time)
-
-    # xs, ys = next_batch(BATCH_SIZE)
-    feed_dict = {x: test_images, y_: test_labels, keep_prob: 1.0}
-    test_accuracy = accuracy.eval(feed_dict=feed_dict)
-
-    print('test accuracy {}'.format(test_accuracy))
+plt.figure(0)
+plt.subplot(121)
+plt.plot(range(len(loss)), loss, label="Training")
+plt.plot(range(len(val_loss)), val_loss, label='Validation')
+plt.title('Loss')
+plt.legend(loc='upper left')
+plt.subplot(122)
+plt.plot(range(len(acc)), acc, label='Training')
+plt.plot(range(len(val_acc)), val_acc, label='Validation')
+plt.title('Accuracy')
+plt.show()
