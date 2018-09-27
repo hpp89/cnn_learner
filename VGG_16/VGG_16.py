@@ -86,7 +86,7 @@ learning_rate = 0.0005
 classes_num = 10
 image_size = 32
 channels = 3
-batch_size = 128
+batch_size = 16
 iterables = 1000
 
 (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
@@ -150,6 +150,6 @@ with tf.Session() as sess:
                                                                             misc.diff_time(now_ts)))
             now_ts = misc.now_time()
 
-    feed_dict = {x: x_test[:800, :, :, :], y_: y_test[:800, :], keep_prob: 1.0}
+    feed_dict = {x: x_test[:300, :, :, :], y_: y_test[:300, :], keep_prob: 1.0}
     test_accuracy = accuracy.eval(feed_dict=feed_dict)
     print("test_accuracy {}".format(test_accuracy))

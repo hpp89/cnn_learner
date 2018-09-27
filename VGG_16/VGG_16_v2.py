@@ -11,36 +11,33 @@ from keras.callbacks import LearningRateScheduler, TensorBoard
 from keras.layers.normalization import BatchNormalization
 from keras.utils.data_utils import get_file
 import matplotlib.pyplot as plt
+import misc
+import math
 
 weight_decay = 0.0001
 dropout = 0.5
-epochs = 50
-iterations = 391
-batch_size = 128
+epochs = 5
+batch_size = 64
+iterations = math.floor(50000 / batch_size)
 num_classes = 10
 log_filepath = r'./vgg19_retrain_logs/'
 
 
 def scheduler(epoch):
-    if epoch < 80:
+    if epoch < 2:
         return 0.1
-    if epoch < 160:
+    if epoch < 3:
         return 0.01
-    return 0.001
+    if epoch < 4:
+        return 0.001
+    return 0.0001
 
 
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+x_train = misc.images_norm(x_train.astype(np.float32))
+x_test = misc.images_norm(x_test.astype(np.float32))
 y_train = keras.utils.to_categorical(y_train, num_classes)
 y_test = keras.utils.to_categorical(y_test, num_classes)
-x_train = x_train.astype(np.float32)
-x_test = x_test.astype(np.float32)
-
-x_train[:, :, :, 0] = (x_train[:, :, :, 0] - 123.680)
-x_train[:, :, :, 1] = (x_train[:, :, :, 1] - 116.779)
-x_train[:, :, :, 2] = (x_train[:, :, :, 2] - 103.939)
-x_test[:, :, :, 0] = (x_test[:, :, :, 0] - 123.680)
-x_test[:, :, :, 1] = (x_test[:, :, :, 1] - 116.779)
-x_test[:, :, :, 2] = (x_test[:, :, :, 2] - 103.939)
 
 model = Sequential()
 
@@ -122,13 +119,13 @@ model.add(BatchNormalization())
 model.add(Activation('relu'))
 model.add(Dropout(dropout))
 
-model.add(Dense(10, use_bias=True, kernel_regularizer=keras.regularizers.l2(weight_decay), kernel_initializer=he_normal(), name='fc_3'))
+model.add(
+    Dense(num_classes, use_bias=True, kernel_regularizer=keras.regularizers.l2(weight_decay), kernel_initializer=he_normal(), name='fc_3'))
 model.add(BatchNormalization())
 model.add(Activation('softmax'))
 
 sgd = optimizers.SGD(lr=0.1, momentum=0.9, nesterov=True)
 model.compile(sgd, loss='categorical_crossentropy', metrics=['accuracy'])
-
 
 tb_cb = TensorBoard(log_dir=log_filepath, histogram_freq=0)
 change_lr = LearningRateScheduler(scheduler)

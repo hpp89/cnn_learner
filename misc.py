@@ -38,6 +38,13 @@ def shuffle(x, y):
     return x, y
 
 
+# xavier初始化器，把权重初始化在low和high范围内(满足N(0,2/Nin+Nout))
+def xavier_init(fan_in, fan_out, constant=1):
+    low = -constant * np.sqrt(6.0 / (fan_in + fan_out))
+    high = constant * np.sqrt(6.0 / (fan_in + fan_out))
+    return tf.random_uniform((fan_in, fan_out), minval=low, maxval=high, dtype=tf.float32)
+
+
 def weight_variable(shape):
     initial = tf.truncated_normal(dtype=tf.float32, stddev=0.1, shape=shape)
     return tf.Variable(initial)
@@ -49,7 +56,7 @@ def bias_variable(shape):
 
 
 def leak_relu(inputs, alpha=0.0):
-    return tf.maximum(inputs * alpha, inputs)
+    return tf.nn.relu(inputs)
 
 
 def batch_normalization(inputs, is_test, iteration, offset, convolutional=False):
@@ -91,7 +98,7 @@ def max_pooling_2x2(inputs, name, ksize=2, stride=2, padding="SAME"):
 def fully_connection(inputs, out_num, keep_prob=1.0, relu=True, alpha=0.0):
     in_num = inputs.get_shape().as_list()[-1]
 
-    weight = weight_variable([in_num, out_num])
+    weight = xavier_init(in_num, out_num)
     bias = bias_variable([out_num])
 
     inputs = tf.add(tf.matmul(inputs, weight), bias)
