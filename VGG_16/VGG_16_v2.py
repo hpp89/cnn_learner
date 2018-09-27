@@ -1,6 +1,6 @@
 import keras
 import numpy as np
-from keras.datasets import cifar10
+from keras.datasets import cifar100
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation, Flatten
@@ -16,24 +16,24 @@ import math
 
 weight_decay = 0.0001
 dropout = 0.5
-epochs = 5
-batch_size = 64
+epochs = 10
+batch_size = 128
 iterations = math.floor(50000 / batch_size)
-num_classes = 10
+num_classes = 100
 log_filepath = r'./vgg19_retrain_logs/'
 
 
 def scheduler(epoch):
-    if epoch < 2:
-        return 0.1
     if epoch < 3:
+        return 0.1
+    if epoch < 5:
         return 0.01
-    if epoch < 4:
+    if epoch < 7:
         return 0.001
     return 0.0001
 
 
-(x_train, y_train), (x_test, y_test) = cifar10.load_data()
+(x_train, y_train), (x_test, y_test) = cifar100.load_data()
 x_train = misc.images_norm(x_train.astype(np.float32))
 x_test = misc.images_norm(x_test.astype(np.float32))
 y_train = keras.utils.to_categorical(y_train, num_classes)

@@ -2,7 +2,7 @@ import keras
 import time
 import numpy as np
 import tensorflow as tf
-from keras.datasets import cifar10
+from keras.datasets import cifar100
 from keras.layers import MaxPooling2D, Dense, Activation, Flatten, Conv2D
 from keras.initializers import he_normal
 from keras.layers import BatchNormalization, Dropout
@@ -10,26 +10,30 @@ from keras import optimizers
 import matplotlib.pyplot as plt
 from keras.callbacks import TensorBoard, LearningRateScheduler
 from keras.preprocessing.image import ImageDataGenerator
+import math
 
-epochs = 15
-iterations = 391
+epochs = 10
+
 batch_size = 128
-num_classes = 10
+iterations = math.floor(50000 / batch_size)
+num_classes = 100
 dropout = 0.5
-weight_decay = 0.0001
+weight_decay = 0.001
 
 log_file_path = './alex_net_logs'
 
 
 def scheduler(epoch):
-    if epoch < 10:
+    if epoch < 3:
         return 0.1
-    if epoch < 13:
+    if epoch < 5:
         return 0.01
-    return 0.001
+    if epoch < 7:
+        return 0.001
+    return 0.0001
 
 
-(train_images, train_labels), (test_images, test_labels) = cifar10.load_data()
+(train_images, train_labels), (test_images, test_labels) = cifar100.load_data()
 train_labels = keras.utils.to_categorical(train_labels, num_classes)
 test_labels = keras.utils.to_categorical(test_labels, num_classes)
 train_images = train_images.astype(np.float32)
@@ -46,52 +50,62 @@ print(train_images.shape, train_labels.shape, test_images.shape, test_labels.sha
 
 model = keras.models.Sequential()
 # block1
-model.add(Conv2D(64, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_regularizer=keras.regularizers.l2(weight_decay),
+model.add(Conv2D(64, kernel_size=(3, 3), strides=(1, 1), padding='same',
+                 kernel_regularizer=keras.regularizers.l2(weight_decay),
                  kernel_initializer=he_normal(), name='block1_conv', input_shape=[32, 32, 3]))
 model.add(BatchNormalization())
 model.add(Activation('relu'))
 model.add(MaxPooling2D((2, 2), (2, 2), padding='same', name='block1_pool'))
 
 # block2
-model.add(Conv2D(128, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_regularizer=keras.regularizers.l2(weight_decay),
+model.add(Conv2D(128, kernel_size=(3, 3), strides=(1, 1), padding='same',
+                 kernel_regularizer=keras.regularizers.l2(weight_decay),
                  kernel_initializer=he_normal(), name='block2_conv'))
 model.add(BatchNormalization())
 model.add(Activation('relu'))
 model.add(MaxPooling2D((2, 2), (2, 2), padding='same', name='block2_pool'))
 
 # block3
-model.add(Conv2D(256, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_regularizer=keras.regularizers.l2(weight_decay),
+model.add(Conv2D(256, kernel_size=(3, 3), strides=(1, 1), padding='same',
+                 kernel_regularizer=keras.regularizers.l2(weight_decay),
                  kernel_initializer=he_normal(), name='block3_conv'))
 model.add(BatchNormalization())
 model.add(Activation('relu'))
 model.add(MaxPooling2D((2, 2), (2, 2), padding='same', name='block3_pool'))
 
 # block4
-model.add(Conv2D(512, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_regularizer=keras.regularizers.l2(weight_decay),
+model.add(Conv2D(512, kernel_size=(3, 3), strides=(1, 1), padding='same',
+                 kernel_regularizer=keras.regularizers.l2(weight_decay),
                  kernel_initializer=he_normal(), name='block4_conv'))
 model.add(BatchNormalization())
 model.add(Activation('relu'))
 model.add(MaxPooling2D((2, 2), (2, 2), padding='same', name='block4_pool'))
 
 # block5
-model.add(Conv2D(512, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_regularizer=keras.regularizers.l2(weight_decay),
+model.add(Conv2D(512, kernel_size=(3, 3), strides=(1, 1), padding='same',
+                 kernel_regularizer=keras.regularizers.l2(weight_decay),
                  kernel_initializer=he_normal(), name='block5_conv'))
 model.add(BatchNormalization())
 model.add(Activation('relu'))
 model.add(MaxPooling2D((2, 2), (2, 2), padding='same', name='block5_pool'))
 
 model.add(Flatten(name='faltten'))
-model.add(Dense(4096, use_bias=True, kernel_regularizer=keras.regularizers.l2(weight_decay), kernel_initializer=he_normal(), name='fc_1'))
+model.add(
+    Dense(4096, use_bias=True, kernel_regularizer=keras.regularizers.l2(weight_decay), kernel_initializer=he_normal(),
+          name='fc_1'))
 model.add(BatchNormalization())
 model.add(Activation('relu'))
 model.add(Dropout(dropout))
 
-model.add(Dense(4096, use_bias=True, kernel_regularizer=keras.regularizers.l2(weight_decay), kernel_initializer=he_normal(), name='fc_2'))
+model.add(
+    Dense(4096, use_bias=True, kernel_regularizer=keras.regularizers.l2(weight_decay), kernel_initializer=he_normal(),
+          name='fc_2'))
 model.add(BatchNormalization())
 model.add(Activation('relu'))
 model.add(Dropout(dropout))
 
-model.add(Dense(10, use_bias=True, kernel_regularizer=keras.regularizers.l2(weight_decay), kernel_initializer=he_normal(), name='fc_3'))
+model.add(Dense(num_classes, use_bias=True, kernel_regularizer=keras.regularizers.l2(weight_decay),
+                kernel_initializer=he_normal(), name='fc_3'))
 model.add(BatchNormalization())
 model.add(Activation('softmax'))
 
