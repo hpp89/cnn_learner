@@ -3,73 +3,73 @@ import numpy as np
 import tensorflow as tf
 
 
-def VGG_16(inputs, keep_prob, classes_num):
+def VGG_16(inputs, keep_prob, classes_num, training):
     # block1
     inputs = misc.conv2_basic(inputs, 3, 64, name="conv1_1", padding="SAME", relu=False)
-    # inputs = misc.batch_normalization()
-    inputs = misc.leak_relu(inputs)
+    inputs = misc.batch_normalization(inputs, training=training)
+    inputs = misc.leaky_relu(inputs)
 
     inputs = misc.conv2_basic(inputs, 3, 64, name="conv1_2", padding="SAME", relu=False)
-    # inputs = misc.batch_normalization()
-    inputs = misc.leak_relu(inputs)
+    inputs = misc.batch_normalization(inputs, training=training)
+    inputs = misc.leaky_relu(inputs)
 
-    inputs = misc.max_pooling_2x2(inputs, name='pool1_1')
+    inputs = misc.max_pooling_2d(inputs, name='pool1_1')
 
     # block2
     inputs = misc.conv2_basic(inputs, 3, 128, name="conv2_1", padding="SAME", relu=False)
-    # inputs = misc.batch_normalization()
-    inputs = misc.leak_relu(inputs)
+    inputs = misc.batch_normalization(inputs, training=training)
+    inputs = misc.leaky_relu(inputs)
 
     inputs = misc.conv2_basic(inputs, 3, 128, name="conv2_2", padding="SAME", relu=False)
-    # inputs = misc.batch_normalization()
-    inputs = misc.leak_relu(inputs)
+    inputs = misc.batch_normalization(inputs, training=training)
+    inputs = misc.leaky_relu(inputs)
 
-    inputs = misc.max_pooling_2x2(inputs, name='pool2_1')
+    inputs = misc.max_pooling_2d(inputs, name='pool2_1')
 
     # block3
     inputs = misc.conv2_basic(inputs, 3, 256, name="conv3_1", padding="SAME", relu=False)
-    # inputs = misc.batch_normalization()
-    inputs = misc.leak_relu(inputs)
+    inputs = misc.batch_normalization(inputs, training=training)
+    inputs = misc.leaky_relu(inputs)
 
     inputs = misc.conv2_basic(inputs, 3, 256, name="conv3_2", padding="SAME", relu=False)
-    # inputs = misc.batch_normalization()
-    inputs = misc.leak_relu(inputs)
+    inputs = misc.batch_normalization(inputs, training=training)
+    inputs = misc.leaky_relu(inputs)
 
     inputs = misc.conv2_basic(inputs, 3, 256, name="conv3_3", padding="SAME", relu=False)
-    # inputs = misc.batch_normalization()
-    inputs = misc.leak_relu(inputs)
+    inputs = misc.batch_normalization(inputs, training=training)
+    inputs = misc.leaky_relu(inputs)
 
-    inputs = misc.max_pooling_2x2(inputs, name='pool3_1')
+    inputs = misc.max_pooling_2d(inputs, name='pool3_1')
 
     # block4
     inputs = misc.conv2_basic(inputs, 3, 512, name="conv4_1", padding="SAME", relu=False)
-    # inputs = misc.batch_normalization()
-    inputs = misc.leak_relu(inputs)
+    inputs = misc.batch_normalization(inputs, training=training)
+    inputs = misc.leaky_relu(inputs)
 
     inputs = misc.conv2_basic(inputs, 3, 512, name="conv4_2", padding="SAME", relu=False)
-    # inputs = misc.batch_normalization()
-    inputs = misc.leak_relu(inputs)
+    inputs = misc.batch_normalization(inputs, training=training)
+    inputs = misc.leaky_relu(inputs)
 
     inputs = misc.conv2_basic(inputs, 3, 512, name="conv4_3", padding="SAME", relu=False)
-    # inputs = misc.batch_normalization()
-    inputs = misc.leak_relu(inputs)
+    inputs = misc.batch_normalization(inputs, training=training)
+    inputs = misc.leaky_relu(inputs)
 
-    inputs = misc.max_pooling_2x2(inputs, name='pool4_1')
+    inputs = misc.max_pooling_2d(inputs, name='pool4_1')
 
     # block5
     inputs = misc.conv2_basic(inputs, 3, 512, name="conv5_1", padding="SAME", relu=False)
-    # inputs = misc.batch_normalization()
-    inputs = misc.leak_relu(inputs)
+    inputs = misc.batch_normalization(inputs, training=training)
+    inputs = misc.leaky_relu(inputs)
 
     inputs = misc.conv2_basic(inputs, 3, 512, name="conv5_2", padding="SAME", relu=False)
-    # inputs = misc.batch_normalization()
-    inputs = misc.leak_relu(inputs)
+    inputs = misc.batch_normalization(inputs, training=training)
+    inputs = misc.leaky_relu(inputs)
 
     inputs = misc.conv2_basic(inputs, 3, 512, name="conv5_3", padding="SAME", relu=False)
-    # inputs = misc.batch_normalization()
-    inputs = misc.leak_relu(inputs)
+    inputs = misc.batch_normalization(inputs, training=training)
+    inputs = misc.leaky_relu(inputs)
 
-    inputs = misc.max_pooling_2x2(inputs, name='pool5_1')
+    inputs = misc.max_pooling_2d(inputs, name='pool5_1')
 
     shape = inputs.get_shape().as_list()
 
@@ -122,7 +122,7 @@ x = tf.placeholder(dtype=tf.float32, shape=[None, image_size, image_size, channe
 y_ = tf.placeholder(dtype=tf.float32, shape=[None, classes_num])
 keep_prob = tf.placeholder(dtype=tf.float32)
 
-logits = VGG_16(x, keep_prob, classes_num)
+logits = VGG_16(x, keep_prob, classes_num, True)
 
 loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=logits, labels=y_))
 train_step = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
@@ -146,8 +146,8 @@ with tf.Session() as sess:
 
             feed_dict = {x: xs, y_: ys, keep_prob: 0.75}
             valid_accuracy = accuracy.eval(feed_dict=feed_dict)
-            print("step {}, loss_train {}, valid_accuracy {}({}sec)".format(i, round(loss_train), valid_accuracy,
-                                                                            misc.diff_time(now_ts)))
+            print("step %d, loss_train %04d, valid_accuracy %04d(%01dsec)" % (i, loss_train, valid_accuracy,
+                                                                              misc.diff_time(now_ts)))
             now_ts = misc.now_time()
 
     feed_dict = {x: x_test[:300, :, :, :], y_: y_test[:300, :], keep_prob: 1.0}
