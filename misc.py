@@ -78,6 +78,19 @@ def conv2_basic(inputs, kernel, out_num, name=None, stride=1, padding="SAME", re
     return inputs
 
 
+def conv2_transpose(inputs, kernel, out_shape, name=None, stride=1, padding='SAME'):
+    shape = inputs.get_shape().as_list()
+
+    weight = weight_variable([kernel, kernel, out_shape[3], shape[3]])
+    bias = bias_variable([out_shape[3]])
+
+    inputs = tf.nn.conv2d_transpose(inputs, filter=weight, output_shape=out_shape, strides=[1, stride, stride, 1], padding=padding,
+                                    name=name)
+    inputs = tf.nn.bias_add(inputs, bias)
+
+    return inputs
+
+
 def max_pooling_2d(inputs, ksize=2, stride=2, padding="SAME", name=None):
     return tf.nn.max_pool(inputs, ksize=[1, ksize, ksize, 1], strides=[1, stride, stride, 1], padding=padding,
                           name=name)
@@ -103,3 +116,7 @@ def fully_connection(inputs, out_num, keep_prob=1.0, relu=True, alpha=0.0):
         inputs = tf.nn.dropout(inputs, keep_prob=keep_prob)
 
     return inputs
+
+
+def image_crop(inputs, crop_size):
+    return tf.image.crop_and_resize(inputs, boxes=[[0, 0, 1, 1]], box_ind=[0], crop_size=crop_size)
