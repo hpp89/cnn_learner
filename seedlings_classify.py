@@ -13,7 +13,7 @@ from keras.regularizers import l2
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from tqdm import tqdm
 
-CLASS = {
+CLASS_2_INDEX = {
     'Black-grass': 0,
     'Charlock': 1,
     'Cleavers': 2,
@@ -28,8 +28,24 @@ CLASS = {
     'Sugar beet': 11
 }
 
+INDEX_2_CLASS = [
+    'Black-grass'
+    'Charlock',
+    'Cleavers',
+    'Common Chickweed',
+    'Common wheat',
+    'Fat Hen',
+    'Loose Silky-bent',
+    'Maize',
+    'Scentless Mayweed',
+    'Shepherds Purse',
+    'Small-flowered Cranesbill',
+    'Sugar beet'
+]
+
 train_path = './seedlings/train'
 test_path = './seedlings/test'
+sub_path = './seedlings/seedlings.csv'
 
 WEIGHT_DELAY = 0.001
 IMAGE_SIZE = 128
@@ -48,7 +64,7 @@ def get_train_data():
     count = 0
     for name_dir in os.listdir(train_path):
         sub_name_list = os.listdir('{}/{}'.format(train_path, name_dir))
-        Y_train.extend([CLASS[name_dir]] * len(sub_name_list))
+        Y_train.extend([CLASS_2_INDEX[name_dir]] * len(sub_name_list))
         for sub_name in tqdm(sub_name_list, total=len(sub_name_list)):
             img = cv2.imread('{}/{}/{}'.format(train_path, name_dir, sub_name))
             img = cv2.resize(img, (IMAGE_SIZE, IMAGE_SIZE))
@@ -61,13 +77,16 @@ def get_train_data():
 
 
 X_test = np.ndarray([4750, IMAGE_SIZE, IMAGE_SIZE, IMAGE_CHANNELS])
+Y_label = []
 
 
 def get_test_data():
     global X_test
+    global Y_label
 
     count = 0
     for name_dir in os.listdir(test_path):
+        Y_label.append(name_dir)
         img = cv2.imread('{}/{}'.format(test_path, name_dir))
         img = cv2.resize(img, (IMAGE_SIZE, IMAGE_SIZE))
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -143,9 +162,16 @@ def test():
     Y_test = model.predict(X_test, verbose=1)
 
     Y_test = np.argmax(Y_test, axis=1)
+    output = []
+    for i in range(len(Y_test)):
+        output.append(INDEX_2_CLASS[Y_test[i]])
 
+    sub = pd.DataFrame({"file": Y_label,
+                        "species": output})
 
+    sub.to_csv(sub_path, index=Flatten)
 
 
 if __name__ == '__main__':
     train()
+    # test()
