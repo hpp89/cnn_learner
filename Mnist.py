@@ -15,11 +15,12 @@ weight_delay = 0.001
 image_size = 28
 num_classes = 10
 batch_size = 64
-epochs = 50
+epochs = 10
 is_train = False
+is_alexNet = True
 train_path = './Mnist/train.csv'
 test_path = './Mnist/test.csv'
-check_point_path = './Mnist/mnist.h5'
+check_point_path = './Mnist/mnist_alex.h5'
 
 train_data = pd.read_csv(train_path)
 X_train = train_data.iloc[:, 1:].values
@@ -36,35 +37,29 @@ X_train = X_train / 255.0
 X_test = X_test.reshape([-1, image_size, image_size, 1])
 X_test = X_test / 255.0
 
-# np.random.seed(42)
-# start = -batch_size
-#
-#
-# def next_batch():
-#     global X_train
-#     global Y_train
-#     global start
-#
-#     start += batch_size
-#     if start + batch_size > num_train:
-#         order = np.random.permutation(range(num_train))
-#         X_train = X_train[order, :, :, :]
-#         Y_train = Y_train[order, :]
-#
-#         start = 0
-#
-#     return X_train[start:start + batch_size, :, :, :], Y_train[start:start + batch_size, :]
-
 if is_train:
     inputs = keras.Input([image_size, image_size, 1])
 
-    c1 = Conv2D(filters=16, kernel_size=(3, 3), padding='same', activation='relu', kernel_initializer=he_normal(), kernel_regularizer=l2(weight_delay))(inputs)
+    c1 = Conv2D(filters=16, kernel_size=(3, 3), padding='same', activation='relu', kernel_initializer=he_normal(),
+                kernel_regularizer=l2(weight_delay))(inputs)
     p1 = MaxPooling2D(pool_size=(2, 2), strides=(2, 2))(c1)
 
-    c2 = Conv2D(filters=16, kernel_size=(3, 3), padding='same', activation='relu', kernel_initializer=he_normal(), kernel_regularizer=l2(weight_delay))(p1)
+    c2 = Conv2D(filters=32, kernel_size=(3, 3), padding='same', activation='relu', kernel_initializer=he_normal(),
+                kernel_regularizer=l2(weight_delay))(p1)
     p2 = MaxPooling2D(pool_size=(2, 2), strides=(2, 2))(c2)
 
-    flat = Flatten()(p2)
+    if is_alexNet:
+        c3 = Conv2D(filters=64, kernel_size=(3, 3), padding='same', activation='relu', kernel_initializer=he_normal(),
+                    kernel_regularizer=l2(weight_delay))(p2)
+        c4 = Conv2D(filters=128, kernel_size=(3, 3), padding='same', activation='relu', kernel_initializer=he_normal(),
+                    kernel_regularizer=l2(weight_delay))(c3)
+        c5 = Conv2D(filters=256, kernel_size=(3, 3), padding='same', activation='relu', kernel_initializer=he_normal(),
+                    kernel_regularizer=l2(weight_delay))(c4)
+        p3 = MaxPooling2D(pool_size=(2, 2), strides=(2, 2))(c5)
+
+        flat = Flatten()(p3)
+    else:
+        flat = Flatten()(p2)
 
     d1 = Dense(1024, activation='relu', kernel_initializer=he_normal(), kernel_regularizer=l2(weight_delay))(flat)
     dropout = Dropout(0.5)(d1)
@@ -78,7 +73,8 @@ if is_train:
     earlystopper = EarlyStopping(patience=0.5, verbose=1)
     checkpoint = ModelCheckpoint(check_point_path, verbose=1, save_best_only=True)
 
-    model.fit(X_train, Y_train, batch_size=batch_size, epochs=epochs, validation_split=0.1, shuffle=True, callbacks=[earlystopper, checkpoint])
+    model.fit(X_train, Y_train, batch_size=batch_size, epochs=epochs, validation_split=0.1, shuffle=True,
+              callbacks=[earlystopper, checkpoint])
 else:
     model = load_model(check_point_path)
     Y_test_pred = model.predict(X_test, verbose=1)
@@ -92,4 +88,3 @@ else:
     # cv2.imshow('img', X_test[n, :] * 255)
     # print(Y_test_pred[n])
     # cv2.waitKey(-1)
-
